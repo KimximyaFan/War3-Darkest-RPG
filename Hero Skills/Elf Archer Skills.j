@@ -214,6 +214,9 @@ private function R_Shooting takes nothing returns nothing
     local real delay = 0.05
     local real ani_speed = 150 * ( (100 + as) / 100 )
     local real angle = GetUnitFacing(u) + (4.0 - 4.0 * Mod(tic, 3)) /* 원래 각도 +- 4 */
+    local real fixed_x = LoadReal(HT, id, 3)
+    local real fixed_y = LoadReal(HT, id, 4)
+    local boolean is_end = false
     
     // 공격 사운드
     
@@ -223,14 +226,28 @@ private function R_Shooting takes nothing returns nothing
     */R_EFFECT, 100, 50, false, false, false, null, null, delay)
     
     // MoustPosition Library
-    if Is_Facing_On(pid) == false then
+    // 자동전투 아니고, 마우스 facing 끝났을 때
+    if Get_Unit_Property(u, IS_AUTO_COMBAT) == 0 and Is_Facing_On(pid) == false then
+        set is_end = true
+        
+    // 자동전투이고, 7.0 초 넘겼을 때    
+    elseif Get_Unit_Property(u, IS_AUTO_COMBAT) != 0 and tic * attack_cool_time > 7.0 then
+        set is_end = true
+        
+    // 움직였을 때,    
+    elseif RAbsBJ(fixed_x - GetUnitX(u)) >= 0.0001 or RAbsBJ(fixed_y - GetUnitY(u)) >= 0.0001 then
+        set is_end = true
+        
+    else
+        call SaveInteger(HT, id, 1, tic)
+        call TimerStart(t, attack_cool_time, false, function R_Shooting)
+    endif
+    
+    if is_end == true then
         call SaveReal( HT, GetHandleId(u), ATTACK_COOLDOWN, 1.0 )
         call Set_Unit_Property(u, AS, Get_Unit_Property(u, AS))
         call Cooldown_Reset(u, LoadInteger(HT, id, 2), 0.1)
         call Timer_Clear(t)
-    else
-        call SaveInteger(HT, id, 1, tic)
-        call TimerStart(t, attack_cool_time, false, function R_Shooting)
     endif
     
     set t = null
@@ -250,13 +267,18 @@ private function R_Act takes nothing returns nothing
     call SaveReal( HT, GetHandleId(u), ATTACK_COOLDOWN, 4.0 )
     call JNSetUnitAttackCooldown(u, 4.0, 1)
     
-    // Mouse Position Library
-    // 마우스 좌표 Facing, 움직이면 풀림
-    call Unit_Facing_Mouse_Fix_Check(u, 7.0, 0.26, 0.0)
+    // 값이 0 이면 자동전투 아님
+    if Get_Unit_Property(u, IS_AUTO_COMBAT) == 0 then
+        // Mouse Position Library
+        // 마우스 좌표 Facing, 움직이면 풀림
+        call Unit_Facing_Mouse_Fix_Check(u, 7.0, 0.26, 0.0)
+    endif
     
     call SaveUnitHandle(HT, id, 0, u)
     call SaveInteger(HT, id, 1, 0) /* tic */
     call SaveInteger(HT, id, 2, skill_id)
+    call SaveReal(HT, id, 3, GetUnitX(u))
+    call SaveReal(HT, id, 4, GetUnitY(u))
     call TimerStart(t, delay, false, function R_Shooting)
     
     set t = null
