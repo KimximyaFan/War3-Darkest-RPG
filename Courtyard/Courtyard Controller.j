@@ -1,8 +1,138 @@
 library CourtyardController requires Adhoc, CourtyardMonsterTable
 
-private function Combat_Control takes nothing returns nothing
+globals
+    private trigger array loop_trg[6]
+endglobals
 
+// =====================================================================
+// Loop Trigger Register
+// =====================================================================
+
+// =====================================================================
+// Combat Control
+// =====================================================================
+
+private function Combat_End takes integer pid, boolean is_user_all_dead returns nothing
+    local group g
+    local unit c
+    
+    // Remove Monsters
+    set g = Group_Copy(courtyard_combat_monster_group[pid], null)
+    loop
+    set c = FirstOfGroup(g)
+    exitwhen c == null
+        call GroupRemoveUnit(g, c)
+        
+        if IsUnitAliveBJ(c) == true then
+            call RemoveUnit(c)
+        endif
+    endloop
+    call Group_Clear(g)
+    
+    // Revive User-Units
+    set g = Group_Copy(courtyard_combat_user_group[pid], null)
+    loop
+    set c = FirstOfGroup(g)
+    exitwhen c == null
+        call GroupRemoveUnit(g, c)
+        
+        if IsUnitDeadBJ(c) == true then
+            call RemoveUnit(c)
+        endif
+    endloop
+    call Group_Clear(g)
+    
+    // State Check
+    if is_user_all_dead == true then
+        call Simple_Msg(pid, "모든 유닛 사망으로 전투 종료")
+    elseif courtyard_end_check[pid] == true then
+        call Simple_Msg(pid, "전투 종료")
+    elseif courtyard_loop_check[pid] == true then
+        call Simple_Msg(pid, "전투 반복")
+        call TriggerEvaluate(loop_trg[pid])
+    else
+        call Simple_Msg(pid, "전투 종료")
+    endif
+    
+    set g = null
+    set c = null
 endfunction
+
+private function Combat_Control_Func takes nothing returns nothing
+    local timer t = GetExpiredTimer()
+    local integer id = GetHandleId(t)
+    local integer pid = LoadInteger(HT, id, 0)
+    local boolean is_combat_end = false
+    local boolean is_user_all_dead = true
+    local boolean is_monster_all_dead = true
+    local group g
+    local unit c
+    
+    // Check If Monsters All Dead
+    set g = Group_Copy(courtyard_combat_monster_group[pid], null)
+    loop
+    set c = FirstOfGroup(g)
+    exitwhen c == null or is_monster_all_dead == false
+        call GroupRemoveUnit(g, c)
+        
+        if IsUnitAliveBJ(c) == true then
+            set is_monster_all_dead = false
+        endif
+    endloop
+    call Group_Clear(g)
+    
+    // Check If User-Units All Dead
+    set g = Group_Copy(courtyard_combat_user_group[pid], null)
+    loop
+    set c = FirstOfGroup(g)
+    exitwhen c == null or is_user_all_dead == false
+        call GroupRemoveUnit(g, c)
+        
+        if IsUnitAliveBJ(c) == true then
+            set is_user_all_dead = false
+        endif
+    endloop
+    call Group_Clear(g)
+    
+    // Check If Combat End
+    if is_monster_all_dead == true then
+        set is_combat_end = true
+    endif
+    
+    if is_user_all_dead == true then
+        set is_combat_end = true
+    endif
+    
+    if courtyard_end_check[pid] == true then
+        set is_combat_end = true
+    endif
+    
+    // Loop Combat Control If Combat Not End
+    if is_combat_end == true then
+        call Timer_Clear(t)
+        call Combat_End(pid, is_user_all_dead)
+    else
+        call TimerStart(t, 1.5, false, function Combat_Control_Func)
+    endif
+    
+    set t = null
+    set g = null
+    set c = null
+endfunction
+
+private function Combat_Control takes integer pid, real delay returns nothing
+    local timer t = CreateTimer()
+    local integer id = GetHandleId(t)
+    
+    call SaveInteger(HT, id, 0, pid)
+    call TimerStart(t, delay + 1.5, false, function Combat_Control_Func)
+    
+    set t = null
+endfunction
+
+// =====================================================================
+// Functions Deal With After Start
+// =====================================================================
 
 private function Monsters_Attack_Order takes integer pid returns nothing
     local group g = Group_Copy(courtyard_combat_monster_group[pid], null)
@@ -12,7 +142,6 @@ private function Monsters_Attack_Order takes integer pid returns nothing
     set c = FirstOfGroup(g)
     exitwhen c == null
         call GroupRemoveUnit(g, c)
-        
         call IssuePointOrderLoc( c, "attack", courtyard_user_start_loc[pid] )
     endloop
     
@@ -77,7 +206,7 @@ endfunction
 // Start
 // =====================================================================
 
-private function Start_Combat takes integer pid, integer level_index returns nothing
+private function Start takes integer pid, integer level_index returns nothing
     local real time
     // Setting for User Group
     call User_Group_Setting(pid)
@@ -89,7 +218,7 @@ private function Start_Combat takes integer pid, integer level_index returns not
     call Start_Fight(pid, time)
     
     // Combat Control, Loop If Loop Checked
-    
+    call Combat_Control(pid, time)
 endfunction
 
 // =====================================================================
@@ -122,7 +251,7 @@ private function Courtyard_Combat_Start_Sync takes nothing returns nothing
     
     // 추후에 확장 되면 용병 유닛도 넣는다
     
-    call Start_Combat(pid, level_index)
+    call Start(pid, level_index)
 endfunction
 
 private function Courtyard_Combat_End_Sync takes nothing returns nothing
@@ -140,8 +269,28 @@ function Courtyard_Combat_End takes integer pid returns nothing
     call DzSyncData("cyend", I2S(pid))
 endfunction
 
-private function Sync_Trigger_Init takes nothing returns nothing
+private function Courtyard_Combat_Loop takes nothing returns nothing
+    local trigger trg = GetTriggeringTrigger()
+    local integer pid = LoadInteger(HT, GetHandleId(trg), 0)
+    
+    call Courtyard_Combat_Start(pid)
+    
+    set trg = null
+endfunction
+
+private function Trigger_Init takes nothing returns nothing
+    local integer pid
     local trigger trg
+    
+    // 반복 전투 트리거
+    set pid = -1
+    loop
+    set pid = pid + 1
+    exitwhen pid >= 6
+        set loop_trg[pid] = CreateTrigger()
+        call SaveInteger(HT, GetHandleId(loop_trg[pid]), 0, pid)
+        call TriggerAddAction( loop_trg[pid], function Courtyard_Combat_Loop)
+    endloop
     
     // 시작 버튼 동기화
     set trg = CreateTrigger()
@@ -157,7 +306,7 @@ private function Sync_Trigger_Init takes nothing returns nothing
 endfunction
 
 function Courtyard_Controller_Init takes nothing returns nothing
-    call Sync_Trigger_Init()
+    call Trigger_Init()
 endfunction
 
 endlibrary
