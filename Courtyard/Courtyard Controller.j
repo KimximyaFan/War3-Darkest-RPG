@@ -24,7 +24,7 @@ private function Combat_End takes integer pid, boolean is_user_all_dead returns 
         call GroupRemoveUnit(g, c)
         
         if IsUnitAliveBJ(c) == true then
-            call RemoveUnit(c)
+            call UnitApplyTimedLifeBJ( 0.02, 'BHwe', c )
         endif
     endloop
     call Group_Clear(g)
@@ -37,7 +37,9 @@ private function Combat_End takes integer pid, boolean is_user_all_dead returns 
         call GroupRemoveUnit(g, c)
         
         if IsUnitDeadBJ(c) == true then
-            call RemoveUnit(c)
+            call ReviveHero(c, GetUnitX(c), GetUnitY(c), true)
+            call Set_HP( c, JNGetUnitMaxHP(c) )
+            call Set_MP( c, JNGetUnitMaxMana(c) )
         endif
     endloop
     call Group_Clear(g)
