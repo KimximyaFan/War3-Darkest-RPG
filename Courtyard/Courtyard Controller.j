@@ -42,6 +42,8 @@ private function Combat_End takes integer pid, boolean is_user_all_dead returns 
     endloop
     call Group_Clear(g)
     
+    set courtyard_is_in_combat[pid] = false
+    
     // State Check
     if is_user_all_dead == true then
         call Simple_Msg(pid, "모든 유닛 사망으로 전투 종료")
@@ -49,7 +51,7 @@ private function Combat_End takes integer pid, boolean is_user_all_dead returns 
         call Simple_Msg(pid, "전투 종료")
     elseif courtyard_loop_check[pid] == true then
         call Simple_Msg(pid, "전투 반복")
-        call TriggerEvaluate(loop_trg[pid])
+        call TriggerExecute(loop_trg[pid])
     else
         call Simple_Msg(pid, "전투 종료")
     endif
@@ -232,7 +234,13 @@ private function Courtyard_Combat_Start_Sync takes nothing returns nothing
     local integer loop_value = S2I( JNStringSplit(str, "/", 2) )
     local integer level_index = S2I( JNStringSplit(str, "/", 3) )
     
+    if courtyard_is_in_combat[pid] == true then
+        return
+    endif
+    
     set courtyard_end_check[pid] = false
+    
+    set courtyard_is_in_combat[pid] = true
     
     if auto_value == 0 then
         set courtyard_auto_check[pid] = false

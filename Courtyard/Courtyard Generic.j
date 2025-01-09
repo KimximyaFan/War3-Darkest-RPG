@@ -13,6 +13,7 @@ globals
     boolean array courtyard_auto_check[6]
     boolean array courtyard_loop_check[6]
     boolean array courtyard_end_check[6]
+    boolean array courtyard_is_in_combat[6]
     
     integer courtyard_max_level = 0 /* Local, Save Load 되는 값 */
     integer courtyard_level_index = 0 /* local */
