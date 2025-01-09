@@ -1,18 +1,46 @@
 library CourtyardController requires Adhoc, CourtyardMonsterTable
 
 globals
-    private trigger array loop_trg[6]
+    private real loop_delay = 6.0
 endglobals
 
 // =====================================================================
-// Loop Trigger Register
+// Combat Loop
 // =====================================================================
+
+private function Combat_Loop takes nothing returns nothing
+    local timer t = GetExpiredTimer()
+    local integer id = GetHandleId(t)
+    local integer pid = LoadInteger(HT, id, 0)
+    local real wait_time = LoadReal(HT, id, 1) - 1.0
+    
+    if courtyard_end_check[pid] == true then
+        call Simple_Msg(pid, "전투 종료")
+        call Timer_Clear(t)
+    elseif courtyard_is_in_combat[pid] == true then
+        call Timer_Clear(t)
+    elseif wait_time < 0.0 then
+        call Timer_Clear(t)
+        
+        if GetLocalPlayer() == Player(pid) then
+            call DzSyncData("cystrt", I2S(pid) + "/" + I2S(courtyard_is_auto) + "/" + I2S(courtyard_is_loop) + "/" + I2S(courtyard_level_index))
+        endif
+    else
+        call Simple_Msg(pid, "전투 시작까지 " + I2S(R2I(wait_time + 0.01)) + "초")
+        call SaveReal(HT, id, 1, wait_time)
+        call TimerStart(t, 1.0, false, function Combat_Loop)
+    endif
+    
+    set t = null
+endfunction
 
 // =====================================================================
 // Combat Control
 // =====================================================================
 
 private function Combat_End takes integer pid, boolean is_user_all_dead returns nothing
+    local timer t
+    local integer id
     local group g
     local unit c
     
@@ -24,6 +52,7 @@ private function Combat_End takes integer pid, boolean is_user_all_dead returns 
         call GroupRemoveUnit(g, c)
         
         if IsUnitAliveBJ(c) == true then
+            call Set_Unit_Property(c, IS_FORCED_DEATH, 1)
             call UnitApplyTimedLifeBJ( 0.02, 'BHwe', c )
         endif
     endloop
@@ -53,11 +82,16 @@ private function Combat_End takes integer pid, boolean is_user_all_dead returns 
         call Simple_Msg(pid, "전투 종료")
     elseif courtyard_loop_check[pid] == true then
         call Simple_Msg(pid, "전투 반복")
-        call TriggerExecute(loop_trg[pid])
+        set t = CreateTimer()
+        set id = GetHandleId(t)
+        call SaveInteger(HT, id, 0, pid)
+        call SaveReal(HT, id, 1, loop_delay)
+        call TimerStart(t, 1.0, false, function Combat_Loop)
     else
         call Simple_Msg(pid, "전투 종료")
     endif
     
+    set t = null
     set g = null
     set c = null
 endfunction
@@ -279,28 +313,8 @@ function Courtyard_Combat_End takes integer pid returns nothing
     call DzSyncData("cyend", I2S(pid))
 endfunction
 
-private function Courtyard_Combat_Loop takes nothing returns nothing
-    local trigger trg = GetTriggeringTrigger()
-    local integer pid = LoadInteger(HT, GetHandleId(trg), 0)
-    
-    call Courtyard_Combat_Start(pid)
-    
-    set trg = null
-endfunction
-
 private function Trigger_Init takes nothing returns nothing
-    local integer pid
     local trigger trg
-    
-    // 반복 전투 트리거
-    set pid = -1
-    loop
-    set pid = pid + 1
-    exitwhen pid >= 6
-        set loop_trg[pid] = CreateTrigger()
-        call SaveInteger(HT, GetHandleId(loop_trg[pid]), 0, pid)
-        call TriggerAddAction( loop_trg[pid], function Courtyard_Combat_Loop)
-    endloop
     
     // 시작 버튼 동기화
     set trg = CreateTrigger()
