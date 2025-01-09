@@ -4,7 +4,7 @@ globals
     private real kiting_time = 0.7
     private real kiting_delay = 0.1
 
-    private real base_pad = 0.15
+    private real base_pad = 0.20
 endglobals
 
 // ===================================================================
@@ -92,35 +92,35 @@ endfunction
 private function Shadow_Skill_Selection takes unit u, unit target, integer pid, real mana, integer count returns real
     local real next_time = 0.0
     local location loc = GetUnitLoc(target)
-    
+   
     // 버프기
     // C X Z
     
     if level_flag[pid] > C and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[C]) <= 0.0 and mana > shadow_mana[C] then
         call IssueImmediateOrder(u, shadow_issue_order[C])
-        set next_time = shadow_pause_time[C] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = shadow_pause_time[C]
     elseif level_flag[pid] > X and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[X]) <= 0.0 and mana > shadow_mana[X] then
         call IssueImmediateOrder(u, shadow_issue_order[X])
-        set next_time = shadow_pause_time[X] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = shadow_pause_time[X]
     elseif level_flag[pid] > Z and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[Z]) <= 0.0 and mana > shadow_mana[Z] then
         call IssueImmediateOrder(u, shadow_issue_order[Z])
-        set next_time = shadow_pause_time[Z] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = shadow_pause_time[Z] 
     
         
     // 공격 방법
     // W E R Q
     elseif level_flag[pid] > W and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[W]) <= 0.0 and mana > shadow_mana[W] then
         call IssueImmediateOrder(u, shadow_issue_order[W])
-        set next_time = shadow_pause_time[W] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = shadow_pause_time[W]
     elseif count == 3 and level_flag[pid] > R and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[R]) <= 0.0 and mana > shadow_mana[R] then
         call IssuePointOrderLoc(u, shadow_issue_order[R], loc)
-        set next_time = shadow_pause_time[R] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = shadow_pause_time[R]
     elseif count == 2 and level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[E]) <= 0.0 and mana > shadow_mana[E] then
         call IssuePointOrderLoc( u, shadow_issue_order[E], loc )
-        set next_time = base_pad + shadow_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = base_pad + shadow_pause_time[E]
     elseif level_flag[pid] > Q and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[Q]) <= 0.0 and mana > shadow_mana[Q] then
         call IssueImmediateOrder(u, shadow_issue_order[Q])
-        set next_time = shadow_pause_time[Q] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = shadow_pause_time[Q]
         
     else
         call IssueTargetOrder( u, "attack", target )
@@ -131,7 +131,7 @@ private function Shadow_Skill_Selection takes unit u, unit target, integer pid, 
     
     set loc = null
     
-    return next_time + base_pad
+    return (next_time + base_pad) * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
 endfunction
 
 private function Shadow_Algorithm takes nothing returns nothing
@@ -156,7 +156,7 @@ private function Shadow_Algorithm takes nothing returns nothing
     elseif dist < 900 and mana > shadow_mana[E] and level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, shadow_skill[E]) <= 0.0 then
         set loc = GetUnitLoc(target)
         call IssuePointOrderLoc( u, shadow_issue_order[E], loc )
-        set next_time = base_pad + shadow_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = base_pad + shadow_pause_time[E]
         call RemoveLocation(loc)
     else
         call IssueTargetOrder( u, "attack", target )
@@ -189,35 +189,35 @@ private function Elf_Knight_Skill_Selection takes unit u, unit target, integer p
     // Z E
     if level_flag[pid] > Z and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[Z]) <= 0.0 and mana > elf_knight_mana[Z] then
         call IssueImmediateOrder(u, elf_knight_issue_order[Z])
-        set next_time = elf_knight_pause_time[Z] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = elf_knight_pause_time[Z] 
     
     elseif count == 4 and level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[E]) <= 0.0 and mana > elf_knight_mana[E] then
         call RemoveLocation(loc)
         set loc = Get_Side_Location(u, target, 150)
         call IssuePointOrderLoc( u, elf_knight_issue_order[E], loc )
-        set next_time = base_pad + elf_knight_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = base_pad + elf_knight_pause_time[E]
         
     // 공격 방법
     // C X R W Q
     elseif level_flag[pid] > C and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[C]) <= 0.0 and mana > elf_knight_mana[C] then
         call IssueImmediateOrder(u, elf_knight_issue_order[C])
-        set next_time = elf_knight_pause_time[C] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = elf_knight_pause_time[C]
         
     elseif level_flag[pid] > X and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[X]) <= 0.0 and mana > elf_knight_mana[X] then
         call IssuePointOrderLoc(u, elf_knight_issue_order[X], loc)
-        set next_time = elf_knight_pause_time[X] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = elf_knight_pause_time[X]
         
     elseif level_flag[pid] > R and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[R]) <= 0.0 and mana > elf_knight_mana[R] then
         call IssueImmediateOrder(u, elf_knight_issue_order[R])
-        set next_time = elf_knight_pause_time[R] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = elf_knight_pause_time[R]
         
     elseif count == 2 and level_flag[pid] > W and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[W]) <= 0.0 and mana > elf_knight_mana[W] then
         call IssuePointOrderLoc(u, elf_knight_issue_order[W], loc)
-        set next_time = elf_knight_pause_time[W] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = elf_knight_pause_time[W]
         
     elseif level_flag[pid] > Q and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[Q]) <= 0.0 and mana > elf_knight_mana[Q] then
         call IssueImmediateOrder(u, elf_knight_issue_order[Q])
-        set next_time = elf_knight_pause_time[Q] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = elf_knight_pause_time[Q]
         
     else
         call IssueTargetOrder( u, "attack", target )
@@ -228,7 +228,7 @@ private function Elf_Knight_Skill_Selection takes unit u, unit target, integer p
     
     set loc = null
     
-    return next_time + base_pad
+    return (next_time + base_pad) * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
 endfunction
 
 private function Elf_Knight_Algorithm takes nothing returns nothing
@@ -253,7 +253,7 @@ private function Elf_Knight_Algorithm takes nothing returns nothing
     elseif dist < 900 and mana > elf_knight_mana[E] and level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, elf_knight_skill[E]) <= 0.0 then
         set loc = GetUnitLoc(target)
         call IssuePointOrderLoc( u, elf_knight_issue_order[E], loc )
-        set next_time = base_pad + elf_knight_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = base_pad + elf_knight_pause_time[E]
         call RemoveLocation(loc)
     else
         call IssueTargetOrder( u, "attack", target )
@@ -286,29 +286,29 @@ private function Night_Crow_Skill_Selection takes unit u, unit target, integer p
     // Z
     if level_flag[pid] > Z and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[Z]) <= 0.0 and mana > night_crow_mana[Z] then
         call IssueImmediateOrder(u, night_crow_issue_order[Z])
-        set next_time = night_crow_pause_time[Z] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = night_crow_pause_time[Z] 
         
     // 공격 방법
     // C X W R Q
     elseif level_flag[pid] > C and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[C]) <= 0.0 and mana > night_crow_mana[C] then
         call IssuePointOrderLoc(u, night_crow_issue_order[C], loc)
-        set next_time = night_crow_pause_time[C] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = night_crow_pause_time[C]
         
     elseif level_flag[pid] > X and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[X]) <= 0.0 and mana > night_crow_mana[X] then
         call IssuePointOrderLoc(u, night_crow_issue_order[X], loc)
-        set next_time = night_crow_pause_time[X] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = night_crow_pause_time[X]
         
     elseif level_flag[pid] > W and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[W]) <= 0.0 and mana > night_crow_mana[W] then
         call IssuePointOrderLoc(u, night_crow_issue_order[W], loc)
-        set next_time = night_crow_pause_time[W] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = night_crow_pause_time[W]
         
     elseif count == 2 and level_flag[pid] > R and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[R]) <= 0.0 and mana > night_crow_mana[R] then
         call IssueImmediateOrder(u, night_crow_issue_order[R])
-        set next_time = night_crow_pause_time[R] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = night_crow_pause_time[R]
         
     elseif level_flag[pid] > Q and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[Q]) <= 0.0 and mana > night_crow_mana[Q] then
         call IssueImmediateOrder(u, night_crow_issue_order[Q])
-        set next_time = night_crow_pause_time[Q] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = night_crow_pause_time[Q]
         
     else
         call IssueTargetOrder( u, "attack", target )
@@ -319,7 +319,7 @@ private function Night_Crow_Skill_Selection takes unit u, unit target, integer p
     
     set loc = null
     
-    return next_time + base_pad
+    return (next_time + base_pad) * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
 endfunction
 
 private function Night_Crow_Algorithm takes nothing returns nothing
@@ -342,7 +342,7 @@ private function Night_Crow_Algorithm takes nothing returns nothing
         if level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, night_crow_skill[E]) <= 0.0 and mana > night_crow_mana[E] then
             set loc = Get_Kiting_Location(u, target, 500)
             call IssuePointOrderLoc( u, night_crow_issue_order[E], loc )
-            set next_time = base_pad + night_crow_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = base_pad + night_crow_pause_time[E]
             call RemoveLocation(loc)
         else
             set next_time = Unit_Kiting(u, target)
@@ -380,34 +380,34 @@ private function Elf_Archer_Skill_Selection takes unit u, unit target, integer p
     // E Z
     if level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[E]) <= 0.0 and mana > elf_archer_mana[E] then
         call IssueImmediateOrder(u, elf_archer_issue_order[E])
-        set next_time = elf_archer_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = elf_archer_pause_time[E] 
         
     elseif level_flag[pid] > Z and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[Z]) <= 0.0 and mana > elf_archer_mana[Z] then
         call IssueImmediateOrder(u, elf_archer_issue_order[Z])
-        set next_time = elf_archer_pause_time[Z] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = elf_archer_pause_time[Z] 
         
     else
         // 공격 방법
         // R C X W Q
         if level_flag[pid] > R and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[R]) <= 0.0 and mana > elf_archer_mana[R] then
             call IssueImmediateOrder(u, elf_archer_issue_order[R])
-            set next_time = elf_archer_pause_time[R] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = elf_archer_pause_time[R]
             
         elseif level_flag[pid] > C and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[C]) <= 0.0 and mana > elf_archer_mana[C] then
             call IssuePointOrderLoc(u, elf_archer_issue_order[C], loc)
-            set next_time = elf_archer_pause_time[C] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = elf_archer_pause_time[C]
             
         elseif level_flag[pid] > X and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[X]) <= 0.0 and mana > elf_archer_mana[X] then
             call IssuePointOrderLoc(u, elf_archer_issue_order[X], loc)
-            set next_time = elf_archer_pause_time[X] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = elf_archer_pause_time[X]
             
         elseif count == 0 and level_flag[pid] > W and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[W]) <= 0.0 and mana > elf_archer_mana[W] then
             call IssuePointOrderLoc(u, elf_archer_issue_order[W], loc)
-            set next_time = elf_archer_pause_time[W] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = elf_archer_pause_time[W]
             
         elseif count == 1 and level_flag[pid] > Q and JNGetUnitAbilityCooldownRemaining(u, elf_archer_skill[Q]) <= 0.0 and mana > elf_archer_mana[Q] then
             call IssuePointOrderLoc(u, elf_archer_issue_order[Q], loc)
-            set next_time = elf_archer_pause_time[Q] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = elf_archer_pause_time[Q]
             
         else
             call IssueTargetOrder( u, "attack", target )
@@ -419,7 +419,7 @@ private function Elf_Archer_Skill_Selection takes unit u, unit target, integer p
     
     set loc = null
     
-    return next_time + base_pad
+    return (next_time + base_pad) * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
 endfunction
 
 private function Elf_Archer_Algorithm takes nothing returns nothing
@@ -468,34 +468,34 @@ private function Foot_Man_Skill_Selection takes unit u, unit target, integer pid
     // 일단 버프기 
     if level_flag[pid] > C and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[C]) <= 0.0 and mana > foot_man_mana[C] then
         call IssueImmediateOrder(u, foot_man_issue_order[C])
-        set next_time = foot_man_pause_time[C] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = foot_man_pause_time[C] 
         
     elseif level_flag[pid] > X and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[X]) <= 0.0 and mana > foot_man_mana[X] then
         call IssueImmediateOrder(u, foot_man_issue_order[X])
-        set next_time = foot_man_pause_time[X] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = foot_man_pause_time[X] 
         
     elseif level_flag[pid] > Z and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[Z]) <= 0.0 and mana > foot_man_mana[Z] then
         call IssueImmediateOrder(u, foot_man_issue_order[Z])
-        set next_time = foot_man_pause_time[Z] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/10) )
+        set next_time = foot_man_pause_time[Z] 
         
     else
         // 공격 방법
         if count == 2 and level_flag[pid] > R and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[R]) <= 0.0 and mana > foot_man_mana[R] then
             call IssueImmediateOrder(u, foot_man_issue_order[R])
-            set next_time = foot_man_pause_time[R] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = foot_man_pause_time[R]
         elseif level_flag[pid] > W and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[W]) <= 0.0 and mana > foot_man_mana[W] then
             call IssueImmediateOrder(u, foot_man_issue_order[W])
-            set next_time = foot_man_pause_time[W] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = foot_man_pause_time[W]
         elseif level_flag[pid] > Q and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[Q]) <= 0.0 and mana > foot_man_mana[Q] then
             call IssueImmediateOrder(u, foot_man_issue_order[Q])
-            set next_time = foot_man_pause_time[Q] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+            set next_time = foot_man_pause_time[Q]
         else
             call IssueTargetOrder( u, "attack", target )
             set next_time = 1.0
         endif
     endif
     
-    return next_time + base_pad
+    return (next_time + base_pad) * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
 endfunction
 
 private function Foot_Man_Algorithm takes nothing returns nothing
@@ -519,7 +519,7 @@ private function Foot_Man_Algorithm takes nothing returns nothing
     elseif dist < 900 and level_flag[pid] > E and JNGetUnitAbilityCooldownRemaining(u, foot_man_skill[E]) <= 0.0 and mana > foot_man_mana[E] then
         set loc = GetUnitLoc(target)
         call IssuePointOrderLoc( u, foot_man_issue_order[E], loc )
-        set next_time = base_pad + foot_man_pause_time[E] * 100.0 / ( 100.0 + (Get_Unit_Property(u, AS)/2) )
+        set next_time = base_pad + foot_man_pause_time[E]
         call RemoveLocation(loc)
     else
         call IssueTargetOrder( u, "attack", target )
