@@ -50,13 +50,22 @@ endfunction
 // ========================================================
 
 private function End_Button_Clicked takes nothing returns nothing
-
+    local integer pid = GetPlayerId(DzGetTriggerUIEventPlayer())
+    
+    // This Function In Courtyard Controller
+    call Courtyard_Combat_End(pid)
+    
+    // Hide Interface
+    call Courtyard_Button_Clicked()
 endfunction
 
 private function Start_Button_Clicked takes nothing returns nothing
     local integer pid = GetPlayerId(DzGetTriggerUIEventPlayer())
     
+    // This Function In Courtyard Controller
     call Courtyard_Combat_Start(pid)
+    
+    // Hide Interface
     call Courtyard_Button_Clicked()
 endfunction
 
