@@ -13,6 +13,8 @@ globals
     private integer courtyard_auto_checkbox
     private integer courtyard_loop_text
     private integer courtyard_loop_checkbox
+    private integer courtyard_potion_text
+    private integer courtyard_potion_checkbox
     private integer courtyard_mercenary_button
     private integer courtyard_start_button
     private integer courtyard_end_button
@@ -47,7 +49,9 @@ private function Courtyard_Button_Clicked takes nothing returns nothing
     endif
 endfunction
 
-// ========================================================
+// ==============================================================
+// Frame Interaction
+// ==============================================================
 
 private function End_Button_Clicked takes nothing returns nothing
     local integer pid = GetPlayerId(DzGetTriggerUIEventPlayer())
@@ -71,6 +75,14 @@ endfunction
 
 private function Mercenary_Button_Clicked takes nothing returns nothing
 
+endfunction
+
+private function Potion_Unchecked takes nothing returns nothing
+    set courtyard_is_potion = 0
+endfunction
+
+private function Potion_Checked takes nothing returns nothing
+    set courtyard_is_potion = 1
 endfunction
 
 private function Loop_Unchecked takes nothing returns nothing
@@ -99,6 +111,10 @@ private function Index_Left_Button_Clicked takes nothing returns nothing
     call DzFrameSetText(courtyard_zone_text, I2S(courtyard_level_index) + " 구역" )
 endfunction
 
+// ==============================================================
+// Frame
+// ==============================================================
+
 private function Box_Inner_Frame takes nothing returns nothing
     local real x = 0.025
     local real y = -0.025
@@ -109,17 +125,17 @@ private function Box_Inner_Frame takes nothing returns nothing
     call DzFrameSetText(courtyard_title, "방치된 안뜰" )
     // 몇 구역
     set courtyard_zone_text = DzCreateFrameByTagName("TEXT", "", courtyard_box, "TeamLadderRankValueTextTemplate", 0)
-    call DzFrameSetPoint(courtyard_zone_text, JN_FRAMEPOINT_CENTER, courtyard_title, JN_FRAMEPOINT_CENTER, 0.00, -0.06)
+    call DzFrameSetPoint(courtyard_zone_text, JN_FRAMEPOINT_CENTER, courtyard_title, JN_FRAMEPOINT_CENTER, 0.00, -0.075)
     call DzFrameSetText(courtyard_zone_text, I2S(courtyard_level_index) + " 구역" )
     // 왼쪽
     set courtyard_index_left_button = DzCreateFrameByTagName("GLUETEXTBUTTON", "", courtyard_box, "ScriptDialogButton", 0)
-    call DzFrameSetPoint(courtyard_index_left_button, JN_FRAMEPOINT_CENTER, courtyard_zone_text, JN_FRAMEPOINT_CENTER, -0.04, -0.07)
+    call DzFrameSetPoint(courtyard_index_left_button, JN_FRAMEPOINT_CENTER, courtyard_zone_text, JN_FRAMEPOINT_CENTER, -0.04, -0.085)
     call DzFrameSetSize(courtyard_index_left_button, 0.045, 0.035)
     call DzFrameSetText(courtyard_index_left_button, "이전")
     call DzFrameSetScriptByCode(courtyard_index_left_button, JN_FRAMEEVENT_CONTROL_CLICK, function Index_Left_Button_Clicked, false)
     // 오른쪽 
     set courtyard_index_right_button = DzCreateFrameByTagName("GLUETEXTBUTTON", "", courtyard_box, "ScriptDialogButton", 0)
-    call DzFrameSetPoint(courtyard_index_right_button, JN_FRAMEPOINT_CENTER, courtyard_zone_text, JN_FRAMEPOINT_CENTER, 0.04, -0.07)
+    call DzFrameSetPoint(courtyard_index_right_button, JN_FRAMEPOINT_CENTER, courtyard_zone_text, JN_FRAMEPOINT_CENTER, 0.04, -0.085)
     call DzFrameSetSize(courtyard_index_right_button, 0.045, 0.035)
     call DzFrameSetText(courtyard_index_right_button, "다음")
     call DzFrameSetScriptByCode(courtyard_index_right_button, JN_FRAMEEVENT_CONTROL_CLICK, function Index_Right_Button_Clicked, false)
@@ -146,7 +162,7 @@ private function Box_Inner_Frame takes nothing returns nothing
     
     // 자동 전투 텍스트
     set courtyard_auto_text = DzCreateFrameByTagName("TEXT", "", courtyard_box, "", 0)
-    call DzFrameSetPoint(courtyard_auto_text, JN_FRAMEPOINT_CENTER, courtyard_mercenary_button, JN_FRAMEPOINT_CENTER, -0.01, 0.075)
+    call DzFrameSetPoint(courtyard_auto_text, JN_FRAMEPOINT_CENTER, courtyard_mercenary_button, JN_FRAMEPOINT_CENTER, -0.01, 0.105)
     call DzFrameSetText(courtyard_auto_text, "자동 전투" )
     // 자동 전투 체크박스
     set courtyard_auto_checkbox = DzCreateFrameByTagName("GLUECHECKBOX", "", courtyard_box, "QuestCheckBox", 0)
@@ -162,6 +178,15 @@ private function Box_Inner_Frame takes nothing returns nothing
     call DzFrameSetPoint(courtyard_loop_checkbox, JN_FRAMEPOINT_LEFT, courtyard_loop_text, JN_FRAMEPOINT_RIGHT, 0.005, 0.0)
     call DzFrameSetScriptByCode(courtyard_loop_checkbox, JN_FRAMEEVENT_CHECKBOX_CHECKED, function Loop_Checked, false)
     call DzFrameSetScriptByCode(courtyard_loop_checkbox, JN_FRAMEEVENT_CHECKBOX_UNCHECKED, function Loop_Unchecked, false)
+    // 자동 포션 텍스트
+    set courtyard_potion_text = DzCreateFrameByTagName("TEXT", "", courtyard_box, "", 0)
+    call DzFrameSetPoint(courtyard_potion_text, JN_FRAMEPOINT_CENTER, courtyard_loop_text, JN_FRAMEPOINT_CENTER, 0, -0.03)
+    call DzFrameSetText(courtyard_potion_text, "자동 포션" )
+    // 자동 포션 체크박스
+    set courtyard_potion_checkbox = DzCreateFrameByTagName("GLUECHECKBOX", "", courtyard_box, "QuestCheckBox", 0)
+    call DzFrameSetPoint(courtyard_potion_checkbox, JN_FRAMEPOINT_LEFT, courtyard_potion_text, JN_FRAMEPOINT_RIGHT, 0.005, 0.0)
+    call DzFrameSetScriptByCode(courtyard_potion_checkbox, JN_FRAMEEVENT_CHECKBOX_CHECKED, function Potion_Checked, false)
+    call DzFrameSetScriptByCode(courtyard_potion_checkbox, JN_FRAMEEVENT_CHECKBOX_UNCHECKED, function Potion_Unchecked, false)
 endfunction
 
 private function Button_N_Box_Frame takes nothing returns nothing
@@ -174,7 +199,7 @@ private function Button_N_Box_Frame takes nothing returns nothing
     
     set courtyard_box = DzCreateFrameByTagName("BACKDROP", "", courtyard_button, "EscMenuBackdrop", 0)
     call DzFrameSetPoint(courtyard_box, JN_FRAMEPOINT_BOTTOMRIGHT, courtyard_button, JN_FRAMEPOINT_TOPLEFT, 0.0, 0.0)
-    call DzFrameSetSize(courtyard_box, 0.28, 0.22)
+    call DzFrameSetSize(courtyard_box, 0.28, 0.25)
     call DzFrameShow(courtyard_box, false)
     
     set sprite = DzCreateFrameByTagName("SPRITE", "", courtyard_button, "", 0)

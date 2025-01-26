@@ -1,8 +1,32 @@
 library CourtyardController requires Adhoc, CourtyardMonsterTable
 
 globals
-    private real loop_delay = 6.0
+    private real loop_delay = 8.0
 endglobals
+
+// =====================================================================
+// Auto Potion
+// =====================================================================
+
+private function Auto_Potion takes integer pid returns nothing
+    local unit u = null
+    
+    if courtyard_potion_check[pid] == false then
+        return
+    endif
+    
+    set u = player_hero[pid].Get_Hero_Unit()
+    
+    if GetUnitLifePercent(u) <= 50.0 then
+        call Health_Potion_Generic_Process(pid)
+    endif
+    
+    if GetUnitManaPercent(u) <= 50.0 then
+        call Mana_Potion_Generic_Process(pid)
+    endif
+    
+    set u = null
+endfunction
 
 // =====================================================================
 // Combat Loop
@@ -23,7 +47,7 @@ private function Combat_Loop takes nothing returns nothing
         call Timer_Clear(t)
         
         if GetLocalPlayer() == Player(pid) then
-            call DzSyncData("cystrt", I2S(pid) + "/" + I2S(courtyard_is_auto) + "/" + I2S(courtyard_is_loop) + "/" + I2S(courtyard_level_index))
+            call DzSyncData("cystrt", I2S(pid) + "/" + I2S(courtyard_is_auto) + "/" + I2S(courtyard_is_loop) + "/" + I2S(courtyard_level_index) + "/" + I2S(courtyard_is_potion) )
         endif
     else
         call Simple_Msg(pid, "전투 시작까지 " + I2S(R2I(wait_time + 0.01)) + "초")
@@ -131,7 +155,7 @@ private function Combat_Control_Func takes nothing returns nothing
         endif
     endloop
     call Group_Clear(g)
-    
+
     // Check If Combat End
     if is_monster_all_dead == true then
         set is_combat_end = true
@@ -144,6 +168,9 @@ private function Combat_Control_Func takes nothing returns nothing
     if courtyard_end_check[pid] == true then
         set is_combat_end = true
     endif
+    
+    // Auto Potion
+    call Auto_Potion(pid)
     
     // Loop Combat Control If Combat Not End
     if is_combat_end == true then
@@ -255,7 +282,7 @@ private function Start takes integer pid, integer level_index returns nothing
     // Start Fight, Apply Auto Combat Algorithm If Auto Checked
     call Start_Fight(pid, time)
     
-    // Combat Control, Loop If Loop Checked
+    // Combat Control, Loop If Loop Checked, Auto Potion If Potion Checked
     call Combat_Control(pid, time)
 endfunction
 
@@ -269,6 +296,9 @@ private function Courtyard_Combat_Start_Sync takes nothing returns nothing
     local integer auto_value = S2I( JNStringSplit(str, "/", 1) )
     local integer loop_value = S2I( JNStringSplit(str, "/", 2) )
     local integer level_index = S2I( JNStringSplit(str, "/", 3) )
+    local integer potion_value = S2I( JNStringSplit(str, "/", 4) )
+    local group temp_group
+    local unit c
     
     if courtyard_is_in_combat[pid] == true then
         return
@@ -290,12 +320,34 @@ private function Courtyard_Combat_Start_Sync takes nothing returns nothing
         set courtyard_loop_check[pid] = true
     endif
     
-    // 일단 전투 그룹에 메인 유닛을 넣는다
-    call GroupAddUnit(courtyard_combat_user_group[pid], player_hero[pid].Get_Hero_Unit())
+    if potion_value == 0 then
+        set courtyard_potion_check[pid] = false
+    else
+        set courtyard_potion_check[pid] = true
+    endif
     
-    // 추후에 확장 되면 용병 유닛도 넣는다
+    // 전투 그룹에 유저 유닛들을 넣는다
+    set temp_group = CreateGroup()
+    call GroupClear(courtyard_combat_user_group[pid])
+    call GroupEnumUnitsInRect(temp_group, courtyard_rect[pid], null)
     
+    loop
+    set c = FirstOfGroup(temp_group)
+    exitwhen c == null
+        call GroupRemoveUnit(temp_group, c)
+        
+        if GetOwningPlayer(c) == Player(pid) and IsUnitType(c, UNIT_TYPE_HERO) == true then
+            call GroupAddUnit(courtyard_combat_user_group[pid], c)
+        endif
+    endloop
+    
+    call Group_Clear(temp_group)
+    
+    // 시작
     call Start(pid, level_index)
+    
+    set c = null
+    set temp_group = null
 endfunction
 
 private function Courtyard_Combat_End_Sync takes nothing returns nothing
@@ -306,7 +358,7 @@ private function Courtyard_Combat_End_Sync takes nothing returns nothing
 endfunction
 
 function Courtyard_Combat_Start takes integer pid returns nothing
-    call DzSyncData("cystrt", I2S(pid) + "/" + I2S(courtyard_is_auto) + "/" + I2S(courtyard_is_loop) + "/" + I2S(courtyard_level_index))
+    call DzSyncData("cystrt", I2S(pid) + "/" + I2S(courtyard_is_auto) + "/" + I2S(courtyard_is_loop) + "/" + I2S(courtyard_level_index) + "/" + I2S(courtyard_is_potion) )
 endfunction
 
 function Courtyard_Combat_End takes integer pid returns nothing

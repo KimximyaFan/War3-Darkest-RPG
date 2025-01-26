@@ -638,6 +638,12 @@ private function Courtyard_Monster_Set_Count_Init takes nothing returns nothing
     set monster_set_count[13] = 6
     set monster_set_count[14] = 4
     set monster_set_count[15] = 1
+    set monster_set_count[16] = 9
+    set monster_set_count[17] = 6
+    set monster_set_count[18] = 7
+    set monster_set_count[19] = 7
+    set monster_set_count[20] = 1
+    set monster_set_count[21] = 1
 endfunction
 
 private function Courtyard_Trigger_Init takes nothing returns nothing
