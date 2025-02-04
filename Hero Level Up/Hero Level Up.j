@@ -3,14 +3,20 @@ library HeroLevelUp requires Stat, HeroSkillAdd
 private function Hero_Level_Up takes nothing returns nothing
     local unit u = GetTriggerUnit()
     local integer pid = GetPlayerId(GetOwningPlayer(u))
+    local Hero current_hero = Get_Unit_Property(u, HERO)
     
-    call player_hero[pid].Level_Up_Property_Apply()
+    //call player_hero[pid].Level_Up_Property_Apply()
     call Hero_Check_Level_for_Skill_Add(u)
+    
+    call current_hero.Stat_Point_Calculate()
     
     call Set_HP( u, JNGetUnitMaxHP(u) )
     call Set_MP( u, JNGetUnitMaxMana(u) )
     
-    call Stat_Refresh(pid)
+    if current_hero == player_hero[pid] then
+        call Stat_Refresh(pid)
+        call Stat_Point_Frame_Refresh(pid)
+    endif
     
     set u = null
 endfunction
