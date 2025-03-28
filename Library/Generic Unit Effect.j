@@ -37,6 +37,7 @@ private function Dummy_Effect_Attached_Func takes nothing returns nothing
     local real x
     local real y
     local unit eff_dummy
+    local location loc
     
     if isFacing == true then
         set angle = GetUnitFacing(u) + angle
@@ -45,12 +46,14 @@ private function Dummy_Effect_Attached_Func takes nothing returns nothing
     
     set x = Polar_X(GetUnitX(u), dist, angle)
     set y = Polar_Y(GetUnitY(u), dist, angle)
+    set loc = Location(x, y)
     
     set eff_dummy = CreateUnit(Player(pid), dummy_unit_id, x, y, eff_angle)
     call DzSetUnitModel(eff_dummy, eff)
     call SetUnitVertexColor(eff_dummy, red, gren, blue, 255 - transparency)
     call SetUnitScalePercent(eff_dummy, eff_x_size, eff_y_size, eff_z_size)
     call SetUnitTimeScalePercent(eff_dummy, eff_speed)
+    call SetUnitFlyHeight(eff_dummy, GetLocationZ(loc) + eff_height, 0.0)
     
     if is_direct_remove == true then
         call SaveUnitHandle(HT, id, 18, eff_dummy)
@@ -59,10 +62,13 @@ private function Dummy_Effect_Attached_Func takes nothing returns nothing
         call UnitApplyTimedLifeBJ( eff_time, 'BHwe', eff_dummy )
         call Timer_Clear(t)
     endif
+    
+    call RemoveLocation(loc)
 
     set t = null
     set u = null
     set eff_dummy = null
+    set loc = null
 endfunction
 
 // isFacing이 true라면 angle은 add_angle로써 작동하게된다
