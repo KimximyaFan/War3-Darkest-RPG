@@ -1,3 +1,0 @@
-library StatAllocationEvent
-
-endlibrary
