@@ -1,7 +1,7 @@
 library UnitDamage requires UnitProperty
 
 // 크리, 공격 타입에 따라 딜줌
-function Unit_Dmg_Target takes unit u, unit target, real dmg, boolean dmg_type returns nothing
+function Unit_Dmg_Target takes unit u, unit target, real dmg, boolean dmg_type returns real
     local integer def_ad = Get_Unit_Property(target, DEF_AD)
     local integer def_ap = Get_Unit_Property(target, DEF_AP)
     local integer reduce_ad = Get_Unit_Property(target, REDUCE_AD)
@@ -42,6 +42,8 @@ function Unit_Dmg_Target takes unit u, unit target, real dmg, boolean dmg_type r
     elseif dmg_type == AP_TYPE and is_crit == true then
         call UnitDamageTargetBJ( u, target, dmg, ATTACK_TYPE_HERO, DAMAGE_TYPE_NORMAL )
     endif
+    
+    return dmg
 endfunction
 
 // 영웅의 물리피해강화, 마법피해강화, 공격력, 주문력을 활용
